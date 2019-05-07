@@ -43,7 +43,7 @@ buscas %>% ggplot(aes(x= session_start_date)) +
 buscas %>% 
   ggplot(aes(x=session_start_timestamp)) +
   geom_density(alpha = .4, fill='purple') +
-  labs(title = "density session_start_date")
+  labs(title = "density session_start_timestamp")
 
 ```
 
@@ -51,7 +51,6 @@ buscas %>%
 buscas %>%  ggplot(aes(x=session_length, y=num_clicks))+
     geom_point()+
     labs(title = "session_length x num_clicks")
-
 
 buscas %>% 
   ggplot(aes(x=session_length)) +
@@ -136,18 +135,18 @@ buscas %>%
 buscas %>% 
   filter(!is.na(first_click)) %>% 
   group_by(first_click) %>% 
-  filter(n() >= 10) %>%
+  filter(n() >= 20) %>%
   ggplot(aes(x=first_click)) +
-  geom_density(fill = "red", alpha = .4)
+  geom_density(fill = "green", color= "red", alpha = .4)
 
 buscas %>% 
   filter(!is.na(first_click)) %>% 
   group_by(first_click, session_start_date) %>% 
   summarise(num_clicks = n()) %>%
-  filter(num_clicks >= 10) %>%
+  filter(num_clicks >= 20) %>%
   ggplot(aes(x=first_click, y = num_clicks)) +
   facet_wrap(~session_start_date) +
-  geom_bar(stat = "identity") 
+  geom_area(fill = "green", color = "red")
 
 ```
 
@@ -184,6 +183,15 @@ buscas %>%
 # 4. Let session length be approximately the time between the first event and the last event in a session. Choose a variable from the dataset and describe its relationship to session length. Visualize the relationship.
 
 ```{r}
-buscas %>% ggplot(aes(x=session_length,y=num_clicks))+
+buscas %>%
+    filter(session_length <= 100000) %>%
+    ggplot(aes(x = session_length, y = results)) +
     geom_point()
+
+buscas %>% 
+    filter(session_length <= 100000) %>%
+    summarise(pearson = cor(session_length, results, method = "pearson"), 
+        spearman = cor(session_length, results, method = "spearman"), 
+        kendall = cor(session_length, results, method = "kendall"))
+
 ```
