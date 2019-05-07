@@ -27,16 +27,107 @@ options(warn=-1) # ignore warns
 buscas = read_csv(here::here("data/search_data.csv"))
 ```
 
+# Explorando os dados
+
 ```{r}
 buscas %>% 
-    ggplot(aes(x = results)) + 
-    geom_histogram(binwidth = 5) 
+    ggplot(aes(x = num_clicks)) + 
+    geom_histogram(binwidth = 1) 
+```
+
+```{r}
+buscas %>% ggplot(aes(x= session_start_date)) +
+    geom_histogram() + 
+    coord_flip()
+
+buscas %>% 
+  ggplot(aes(x=session_start_timestamp)) +
+  geom_density(alpha = .4, fill='purple') +
+  labs(title = "density session_start_date")
+
+```
+
+```{r}
+buscas %>%  ggplot(aes(x=session_length, y=num_clicks))+
+    geom_point()+
+    labs(title = "session_length x num_clicks")
+
+
+buscas %>% 
+  ggplot(aes(x=session_length)) +
+  geom_density(alpha = .4, fill='red') +
+  labs(title = "density session_length")
+
+buscas %>% 
+  ggplot(aes(x=num_clicks)) +
+  geom_density(alpha = .4, fill='blue') +
+  labs(title = "density num_clicks")
+
+```
+
+```{r}
+buscas %>% 
+  filter(session_length <= 100000) %>%
+  filter(num_clicks <= 25) %>%
+  ggplot(aes(x=session_length, y=num_clicks)) +
+  geom_point() +
+  labs(title = "session_length x num_clicks without outliers")
+```
+
+
+```{r}
+buscas %>% 
+  ggplot(aes(x=results, y=search_index)) +
+    geom_point() +
+    labs(title = "results x search_index")
+
+buscas %>% 
+  ggplot(aes(x=results)) +
+  geom_density(alpha = .4, fill='red') +
+  labs(title = "density results")
+
+buscas %>% 
+  ggplot(aes(x=search_index)) +
+  geom_density(alpha = .4, fill='red') +
+  labs(title = "density search_index")
+
+```
+
+```{r}
+buscas %>% 
+  filter(results <= 25) %>%
+  ggplot(aes(x=results)) +
+  geom_density(alpha = .4, fill='orange') +
+  labs(title = "dist results")
+
+buscas %>% 
+  filter(session_length <= 100000) %>%
+  ggplot(aes(x=session_length, y=results)) +
+    geom_point() +
+    labs(title = "session_length x results")
 ```
 
 # 1. What is our daily overall clickthrough rate? How does it vary between the groups?
 
 ```{r}
+buscas$session_start_date <- buscas$session_start_date %>% as.Date("%d/%m/%Y")
 
+buscas %>%
+  group_by(session_start_date) %>%
+  mutate(clicks_per_day = sum(num_clicks)) %>%
+  ggplot(aes(x=session_start_date, y=clicks_per_day)) +
+  geom_point() +
+  geom_line() +
+  labs(title = "clicks_per_day")
+
+buscas %>%
+  group_by(group, session_start_date) %>%
+  mutate(clicks_per_day = sum(num_clicks)) %>%
+  ggplot(mapping = aes(x=session_start_date, y=clicks_per_day, color = group)) +
+  geom_point() +
+  geom_line() +
+  facet_grid(group ~ .) +
+  labs(title = "clicks_per_day")
 ```
 
 # 2. Which results do people tend to try first? How does it change day-to-day?
