@@ -133,23 +133,57 @@ buscas %>%
 # 2. Which results do people tend to try first? How does it change day-to-day?
 
 ```{r}
+buscas %>% 
+  filter(!is.na(first_click)) %>% 
+  group_by(first_click) %>% 
+  filter(n() >= 10) %>%
+  ggplot(aes(x=first_click)) +
+  geom_density(fill = "red", alpha = .4)
+
+buscas %>% 
+  filter(!is.na(first_click)) %>% 
+  group_by(first_click, session_start_date) %>% 
+  summarise(num_clicks = n()) %>%
+  filter(num_clicks >= 10) %>%
+  ggplot(aes(x=first_click, y = num_clicks)) +
+  facet_wrap(~session_start_date) +
+  geom_bar(stat = "identity") 
 
 ```
 
 # 3. What is our daily overall zero results rate? How does it vary between the groups?
 
 ```{r}
+buscas %>% 
+    filter(results == 0) %>% 
+    group_by(session_start_date) %>% 
+    mutate(num_results_0 = n()) %>% 
+    ggplot(aes(x = session_start_date, y = num_results_0)) +
+    geom_line() +
+    labs(
+      title = "Distribution of results 0",
+      x = "Date",
+      y = "Number of results 0"
+    )
+
+buscas %>% 
+    filter(results == 0) %>% 
+    group_by(group, session_start_date) %>% 
+    mutate(num_results_0 = n()) %>% 
+    ggplot(aes(x = session_start_date, y = num_results_0, color = group)) +
+    geom_line() +
+    facet_grid(group ~ .) +
+    labs(
+      title = "Distribution of results 0",
+      x = "Date",
+      y = "Number of results 0"
+    )
 
 ```
 
 # 4. Let session length be approximately the time between the first event and the last event in a session. Choose a variable from the dataset and describe its relationship to session length. Visualize the relationship.
 
 ```{r}
-
-```
-
-# 5. Summarize your findings in an executive summary.
-
-```{r}
-
+buscas %>% ggplot(aes(x=session_length,y=num_clicks))+
+    geom_point()
 ```
