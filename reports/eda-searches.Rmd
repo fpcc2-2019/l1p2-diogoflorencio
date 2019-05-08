@@ -108,6 +108,8 @@ buscas %>%
 
 # 1. What is our daily overall clickthrough rate? How does it vary between the groups?
 
+O gráfico exibe a relação entre data e número de clicks, é possível perceber que os dias 1,2 e 3 de março possuem mais clicks. O dia 5 de março é o dia com menos clicks.
+
 ```{r}
 buscas$session_start_date <- buscas$session_start_date %>% as.Date("%d/%m/%Y")
 
@@ -118,7 +120,11 @@ buscas %>%
   geom_point() +
   geom_line() +
   labs(title = "clicks_per_day")
+```
 
+Considerando a mesma relação, mas dessa vez considerando os grupos, observamos que o grupo A possui um maior número de clicks do que o grupo B em todo o período observado. O grupo B possui maior regularidade na quantidade de clicks do que o grupo A, isso pode ser obersavado comparando a variância dos dois grupos.
+
+```{r}
 buscas %>%
   group_by(group, session_start_date) %>%
   mutate(clicks_per_day = sum(num_clicks)) %>%
@@ -127,6 +133,10 @@ buscas %>%
   geom_line() +
   facet_grid(group ~ .) +
   labs(title = "clicks_per_day")
+
+buscas %>% 
+    group_by(group) %>%
+    summarise(variancia = var(session_length, results))
 ```
 
 # 2. Which results do people tend to try first? How does it change day-to-day?
@@ -147,10 +157,11 @@ buscas %>%
   ggplot(aes(x=first_click, y = num_clicks)) +
   facet_wrap(~session_start_date) +
   geom_area(fill = "green", color = "red")
-
 ```
 
 # 3. What is our daily overall zero results rate? How does it vary between the groups?
+
+O gráfico exibe a distribuição de pesquisas que retornaram 0 resultados ao longo do periodo de coleta. O dia 5 é o dia com menor quantidade de resultados 0, mas como visto na questão 1 também é o dia com menos quantidade de clicks.
 
 ```{r}
 buscas %>% 
@@ -164,7 +175,11 @@ buscas %>%
       x = "Date",
       y = "Number of results 0"
     )
+```
 
+O gráfico exibe a mesma relação do anterior, porém dessa vez considerando os grupos. O grupo B apresenta menos resultados 0 do que o grupo A e também uma maior regularidade, ou seja, a mesma relação observada para o número de clicks.
+
+```{r}
 buscas %>% 
     filter(results == 0) %>% 
     group_by(group, session_start_date) %>% 
@@ -177,10 +192,12 @@ buscas %>%
       x = "Date",
       y = "Number of results 0"
     )
-
 ```
 
+
 # 4. Let session length be approximately the time between the first event and the last event in a session. Choose a variable from the dataset and describe its relationship to session length. Visualize the relationship.
+
+Aqui observamos a relação entre o tamanho da sessão e o valor de resultados retornados em pesquisaas dentro dessa mesma sessão. Não é possível perceber uma correção entre as variáveis, de qualquer natureza. Ao estimar as correlações nenhuma retorna um valor significante, ou seja, não existe correlação linear ou não linear entre as variáveis. Em outras palavras o tamanho da sessão e e o valor de resultados retornados em pesquisaas dentro dessa mesma sessão são variáveis independentes entre si.
 
 ```{r}
 buscas %>%
