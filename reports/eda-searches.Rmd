@@ -19,6 +19,9 @@ Aqui, exploramos esses dados.
 library(tidyverse)
 library(here)
 library(lubridate)
+library(boot)
+library(broom)
+library(perm)
 theme_set(theme_bw())
 options(warn=-1) # ignore warns
 ```
@@ -250,3 +253,58 @@ buscas %>%
         kendall = cor(session_length, results, method = "kendall"))
 
 ```
+ 
+# Diferença entre o clickthrough rate dos grupos A e B
+ 
+## Com teste de hipótese 
+```{r}
+library(perm)
+group_a = buscas %>% filter(group == "a") %>% pull(num_clicks)
+group_b = buscas %>% filter(group == "b") %>% pull(num_clicks)
+permTS(group_a, group_b)
+
+```
+ 
+## IC's
+```{r}
+theta_diferenca = function(d, i){
+    clicks = d %>% 
+        slice(i) %>% 
+        group_by(group) %>% 
+        summarise(click = mean(num_clicks)) 
+    
+    group_a = clicks %>% filter(group == "a") %>% pull(click)
+    group_b = clicks %>% filter(group == "b") %>% pull(click)
+    
+    group_a - group_b
+}
+
+
+theta_c = theta_diferenca(buscas, 1:NROW(buscas))
+
+theta_c
+
+buscas %>% 
+    boot(statistic = theta_diferenca, R = 4000) %>% 
+    tidy(conf.level = 0.95, 
+         conf.int = TRUE)
+```
+
+#  A diferença na proporção buscas com zero resultados nos grupos A e B
+
+```{r}
+
+```
+
+
+## Com teste de hipótese
+```{r}
+
+```
+
+## IC's
+```{r}
+
+```
+ 
+ 
