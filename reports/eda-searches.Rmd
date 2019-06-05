@@ -258,7 +258,6 @@ buscas %>%
  
 ## Com teste de hipótese 
 ```{r}
-library(perm)
 group_a = buscas %>% filter(group == "a") %>% pull(num_clicks)
 group_b = buscas %>% filter(group == "b") %>% pull(num_clicks)
 permTS(group_a, group_b)
@@ -267,7 +266,7 @@ permTS(group_a, group_b)
  
 ## IC's
 ```{r}
-theta_diferenca = function(d, i){
+theta_dif_click = function(d, i){
     clicks = d %>% 
         slice(i) %>% 
         group_by(group) %>% 
@@ -280,12 +279,12 @@ theta_diferenca = function(d, i){
 }
 
 
-theta_c = theta_diferenca(buscas, 1:NROW(buscas))
+theta_c = theta_dif_click(buscas, 1:NROW(buscas))
 
 theta_c
 
 buscas %>% 
-    boot(statistic = theta_diferenca, R = 4000) %>% 
+    boot(statistic = theta_dif_click, R = 4000) %>% 
     tidy(conf.level = 0.95, 
          conf.int = TRUE)
 ```
@@ -293,17 +292,71 @@ buscas %>%
 #  A diferença na proporção buscas com zero resultados nos grupos A e B
 
 ```{r}
-
+buscas <- buscas %>% mutate(is_zero = results == 0)
+group_a = buscas %>% group_by(group) %>% summarise(prop_zero = sum(is_zero)/n()) %>% filter(group == 'a') %>% pull(prop_zero)
+group_b = buscas %>% group_by(group) %>% summarise(prop_zero = sum(is_zero)/n()) %>% filter(group == 'b') %>% pull(prop_zero)
+theta_diff_prop = group_a - group_b
 ```
 
 
 ## Com teste de hipótese
 ```{r}
 
+group_a = buscas %>% filter(group == "a") %>% pull(num_clicks)
+group_b = buscas %>% filter(group == "b") %>% pull(num_clicks)
+permTS(group_a, group_b)
+# permitação de theta por grupo
+prop_diff = function(d){
+    proporcoes = d %>% 
+        mutate(grupo_embaralhado = sample(group, n())) %>% 
+        group_by(grupo_embaralhado) %>% 
+        summarise(prop_zero = sum(is_zero)/n()) 
+    
+    prop_a = proporcoes %>% filter(grupo_embaralhado == "a") %>% pull(prop_zero)
+    prop_b = proporcoes %>% filter(grupo_embaralhado == "b") %>% pull(prop_zero)
+    
+    prop_a - prop_b
+}
+
+# plot dist de densidade do theta_diff_prop
+diffs1 = replicate(5000, {prop_diff(buscas)})
+tibble(diferenca = diffs1) %>% 
+  ggplot(aes(x = diferenca)) + 
+  # geom_histogram(binwidth = .2, fill = "white", color = "darkgreen") + 
+    geom_density(fill = "white", color = "darkgreen") + 
+  geom_vline(xintercept = theta_diff_prop, 
+             color = "orange") + 
+    geom_vline(xintercept = - theta_diff_prop, 
+             color = "orange") + 
+    geom_rug()
+
+mean(abs(diffs1) >= abs(theta_diff_prop)) # p-value
 ```
 
 ## IC's
 ```{r}
+theta_dif_prop = function(d, i){
+    proporcoes = d %>% 
+        slice(i) %>% 
+        mutate(grupo_embaralhado = sample(group, n())) %>% 
+        group_by(grupo_embaralhado) %>% 
+        summarise(prop_zero = sum(is_zero)/n()) 
+    
+    prop_a = proporcoes %>% filter(grupo_embaralhado == "a") %>% pull(prop_zero)
+    prop_b = proporcoes %>% filter(grupo_embaralhado == "b") %>% pull(prop_zero)
+    
+    prop_a - prop_b
+}
+
+theta_c_prop = theta_dif_prop(buscas, 1:NROW(buscas))
+
+theta_c_prop
+
+buscas %>% 
+    boot(statistic = theta_dif_prop, R = 4000) %>% 
+    tidy(conf.level = 0.95, 
+         conf.int = TRUE)
+
 
 ```
  
